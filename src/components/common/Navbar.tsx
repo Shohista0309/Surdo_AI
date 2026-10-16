@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, X, ArrowRight, Eye, Sparkles, BookOpen, Search, Heart, GraduationCap, Home, Camera } from 'lucide-react';
 import { NavPage, AppModule } from '../../types';
+import { SurdoLogoIcon } from './SurdoLogo';
 
 interface NavbarProps {
   currentPage: NavPage;
@@ -51,9 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-3 group text-left"
             aria-label="SURDO AI bosh sahifasiga o‘tish"
           >
-            <div className="w-10 h-10 rounded-2xl bg-surdo-forest text-surdo-cream flex items-center justify-center font-bold text-lg shadow-sm group-hover:bg-surdo-green transition-colors">
-              🤲
-            </div>
+            <SurdoLogoIcon size={40} className="shadow-sm group-hover:scale-105 transition-transform" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl sm:text-2xl font-black tracking-tight text-surdo-forest font-display">

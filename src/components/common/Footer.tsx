@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppModule } from '../../types';
+import { SurdoLogoIcon } from './SurdoLogo';
 
 interface FooterProps {
   onSelectModule?: (module: AppModule) => void;
@@ -13,9 +14,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectModule }) => {
           {/* Brand Col (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-surdo-green text-surdo-cream flex items-center justify-center font-bold text-sm">
-                🤲
-              </div>
+              <SurdoLogoIcon size={32} />
               <span className="text-2xl font-black tracking-tight text-white font-display">
                 SURDO AI
               </span>
