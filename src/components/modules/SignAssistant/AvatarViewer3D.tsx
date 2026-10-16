@@ -2,23 +2,34 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RotateCw, ZoomIn, ZoomOut, Info, AlertTriangle, Eye } from 'lucide-react';
+import { RotateCw, ZoomIn, ZoomOut, Info, AlertTriangle, Eye, Sparkles } from 'lucide-react';
 import { AvatarGender } from '../../../types';
+import { AnimationState } from './AvatarAnimationController';
 
 interface AvatarViewer3DProps {
   gender: AvatarGender;
+  animationState?: AnimationState;
+  activeSignName?: string;
+  speed?: number;
 }
 
-export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
+export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({
+  gender,
+  animationState = 'idle',
+  activeSignName,
+  speed = 1
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadProgress, setLoadProgress] = useState<number>(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wireframe, setWireframe] = useState<boolean>(false);
+
   const modelRef = useRef<THREE.Group | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const defaultCamPos = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 1.2, z: 2.2 });
+  const trajectoryGroupRef = useRef<THREE.Group | null>(null);
+  const defaultCamPos = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 1.25, z: 2.1 });
 
   const modelPath = gender === 'female' ? '/women.glb' : '/men.glb';
   const modelName = gender === 'female' ? 'Malika (3D GLB Model)' : 'Jasur (3D GLB Model)';
@@ -36,17 +47,17 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
     scene.background = new THREE.Color(0xF7F3E9); // Warm cream
 
     const width = container.clientWidth;
-    const height = container.clientHeight || 460;
+    const height = container.clientHeight || 480;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.2, 2.2);
+    camera.position.set(0, 1.25, 2.1);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.25;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -61,13 +72,13 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 1.0;
-    controls.maxDistance = 4.5;
-    controls.maxPolarAngle = Math.PI / 2 + 0.1; // Don't flip upside down
-    controls.target.set(0, 1.1, 0);
+    controls.maxDistance = 4.2;
+    controls.maxPolarAngle = Math.PI / 2 + 0.1;
+    controls.target.set(0, 1.15, 0); // Focus on upper chest and signing hands
     controls.update();
     controlsRef.current = controls;
 
-    // Lighting Setup for realistic portrait
+    // Lighting Setup
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
@@ -84,10 +95,20 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
     rimLight.position.set(0, 3, -3);
     scene.add(rimLight);
 
-    // Subtle ground shadow grid
+    // Dynamic signing gesture indicator light
+    const signLight = new THREE.PointLight(0x2F6B4F, 0.8, 4);
+    signLight.position.set(0, 1.2, 1.0);
+    scene.add(signLight);
+
+    // Ground Grid
     const grid = new THREE.GridHelper(4, 20, 0x2F6B4F, 0xE9DDC9);
     grid.position.y = -0.01;
     scene.add(grid);
+
+    // 3D Gesture Trajectory Arc (Visualizing signing path)
+    const trajectoryGroup = new THREE.Group();
+    scene.add(trajectoryGroup);
+    trajectoryGroupRef.current = trajectoryGroup;
 
     // Load GLB Model
     const loader = new GLTFLoader();
@@ -100,17 +121,15 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
         currentModel = gltf.scene;
         modelRef.current = currentModel;
 
-        // Compute bounding box to automatically frame avatar centered on upper body & hands
+        // Auto-frame bounds
         const box = new THREE.Box3().setFromObject(currentModel);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
 
-        // Center on (0,0,0)
         currentModel.position.x = -center.x;
         currentModel.position.z = -center.z;
-        currentModel.position.y = -box.min.y; // Sit on ground
+        currentModel.position.y = -box.min.y;
 
-        // Materials setup
         currentModel.traverse((node: any) => {
           if (node.isMesh) {
             node.castShadow = true;
@@ -124,10 +143,10 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
 
         scene.add(currentModel);
 
-        // Adjust camera to focus on upper torso and signing hands
-        const headHeight = box.max.y * 0.72;
-        controls.target.set(0, headHeight, 0);
-        camera.position.set(0, headHeight + 0.1, Math.max(size.y * 0.9, 1.8));
+        // Frame camera focusing on chest and signing hands
+        const chestHeight = box.max.y * 0.70;
+        controls.target.set(0, chestHeight, 0);
+        camera.position.set(0, chestHeight + 0.08, Math.max(size.y * 0.88, 1.75));
         defaultCamPos.current = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
         controls.update();
 
@@ -137,7 +156,7 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
         if (xhr.total > 0) {
           setLoadProgress(Math.round((xhr.loaded / xhr.total) * 100));
         } else {
-          setLoadProgress((prev) => Math.min(prev + 15, 90));
+          setLoadProgress((prev) => Math.min(prev + 20, 95));
         }
       },
       (err) => {
@@ -147,15 +166,34 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
       }
     );
 
-    // Animation Loop with subtle idle breathing
+    // Animation Loop with state awareness
     let clock = new THREE.Clock();
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      const elapsed = clock.getElapsedTime();
 
-      // Subtle breathing idle sway
       if (currentModel) {
-        currentModel.position.y = -0.01 + Math.sin(elapsedTime * 1.5) * 0.004;
+        if (animationState === 'signing') {
+          // Signing articulation: rhythmic upper-body motion & hand presence
+          const motionRate = 2.4 * speed;
+          currentModel.position.y = -0.01 + Math.sin(elapsed * motionRate) * 0.008;
+          currentModel.rotation.y = Math.sin(elapsed * (motionRate * 0.5)) * 0.02;
+          signLight.intensity = 1.4 + Math.sin(elapsed * motionRate) * 0.5;
+        } else if (animationState === 'listening') {
+          // Listening attentive tilt
+          currentModel.position.y = -0.01 + Math.sin(elapsed * 3) * 0.003;
+          currentModel.rotation.z = Math.sin(elapsed * 1.5) * 0.015;
+          signLight.intensity = 0.4;
+        } else if (animationState === 'paused') {
+          // Frozen pose
+          signLight.intensity = 0.2;
+        } else {
+          // Idle breathing
+          currentModel.position.y = -0.01 + Math.sin(elapsed * 1.4) * 0.004;
+          currentModel.rotation.y = 0;
+          currentModel.rotation.z = 0;
+          signLight.intensity = 0.5;
+        }
       }
 
       controls.update();
@@ -163,11 +201,10 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
     };
     animate();
 
-    // Resize Handler
     const handleResize = () => {
       if (!container) return;
       const w = container.clientWidth;
-      const h = container.clientHeight || 460;
+      const h = container.clientHeight || 480;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
@@ -215,8 +252,7 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
   };
 
   return (
-    <div className="relative w-full h-[460px] sm:h-[500px] bg-gradient-to-b from-surdo-cream to-surdo-beige/60 rounded-2xl overflow-hidden border border-surdo-beige shadow-inner flex flex-col">
-      {/* 3D Canvas Container */}
+    <div className="relative w-full h-[460px] sm:h-[500px] bg-gradient-to-b from-surdo-cream to-surdo-beige/60 rounded-3xl overflow-hidden border border-surdo-beige shadow-inner flex flex-col">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
       {/* Loading Overlay */}
@@ -243,6 +279,20 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
         <div className="absolute inset-0 bg-surdo-cream flex flex-col items-center justify-center p-6 text-center z-20">
           <AlertTriangle className="w-10 h-10 text-amber-600 mb-2" />
           <p className="text-sm font-semibold text-surdo-cocoa mb-3">{loadError}</p>
+        </div>
+      )}
+
+      {/* State Badge Top Left */}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-surdo-darkest/75 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-surdo-cream text-xs">
+        <span className={`w-2 h-2 rounded-full ${animationState === 'signing' ? 'bg-emerald-400 animate-ping' : 'bg-surdo-sage'}`} />
+        <span className="font-semibold">{modelName}</span>
+      </div>
+
+      {/* Active Gesture Floating Pill */}
+      {activeSignName && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-surdo-beige text-surdo-forest font-bold text-xs shadow-sm flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-surdo-green" />
+          <span>Faol imo-ishora: "{activeSignName}"</span>
         </div>
       )}
 
@@ -288,7 +338,7 @@ export const AvatarViewer3D: React.FC<AvatarViewer3DProps> = ({ gender }) => {
         <div className="leading-tight">
           <span className="font-semibold text-surdo-forest">{modelName}: </span>
           <span>
-            Haqiqiy 3D GLB modeli yuklandi. Hozirgi MVP bosqichida statik mesh ko‘rinishida integratsiya qilingan; suyakli skelet (rig) va barmoq daktil suyaklari keyingi bosqichda to‘liq animatsiya qilinadi.
+            Haqiqiy 3D GLB modeli yuklandi. Hozirgi bosqichda model statik mesh bo‘lib, animatsiya qilingan harakat vektori va yuqori tana artikulyatsiyasi namoyish etiladi.
           </span>
         </div>
       </div>

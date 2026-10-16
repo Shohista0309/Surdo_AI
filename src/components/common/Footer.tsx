@@ -77,6 +77,22 @@ export const Footer: React.FC<FooterProps> = ({ onSelectModule }) => {
             <ul className="space-y-2 text-xs">
               <li>
                 <button
+                  onClick={() => onSelectModule && onSelectModule('camera')}
+                  className="hover:text-white transition-colors text-left font-semibold text-emerald-400"
+                >
+                  Kamera Tahlili (Sign-to-Speech)
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onSelectModule && onSelectModule('signassistant')}
+                  className="hover:text-white transition-colors text-left"
+                >
+                  AI Sign Assistant (Nutqdan belgiga)
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onSelectModule && onSelectModule('imolab')}
                   className="hover:text-white transition-colors text-left"
                 >
@@ -89,14 +105,6 @@ export const Footer: React.FC<FooterProps> = ({ onSelectModule }) => {
                   className="hover:text-white transition-colors text-left"
                 >
                   OilaSign Mashqlari
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onSelectModule && onSelectModule('signassistant')}
-                  className="hover:text-white transition-colors text-left"
-                >
-                  AI Sign Assistant
                 </button>
               </li>
               <li>

@@ -6,6 +6,7 @@ export type AppModule =
   | 'imolab'
   | 'oilasign'
   | 'signassistant'
+  | 'camera'
   | 'teacher';
 
 export type AvatarGender = 'female' | 'male';

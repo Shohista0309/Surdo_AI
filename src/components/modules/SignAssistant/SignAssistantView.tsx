@@ -1,44 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Send, Sparkles, RefreshCw, AlertCircle, CheckCircle2, Sliders, Box, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Send, Sparkles, RefreshCw, AlertCircle, Box, Image as ImageIcon, Camera, ArrowRight, Volume2 } from 'lucide-react';
 import { AvatarGender, AvatarViewMode, SignSequenceToken } from '../../../types';
 import { analyzeTextForSigns, quickPromptPresets } from '../../../data/verifiedSigns';
 import { isSpeechRecognitionSupported, createSpeechRecognizer } from '../../../utils/speechRecognition';
 import { SignSequencePlayer } from './SignSequencePlayer';
 import { AvatarViewer3D } from './AvatarViewer3D';
+import { AvatarAnimationController, AnimationState } from './AvatarAnimationController';
 import { Badge } from '../../common/Badge';
 
-export const SignAssistantView: React.FC = () => {
+interface SignAssistantViewProps {
+  onNavigateToCamera?: () => void;
+}
+
+export const SignAssistantView: React.FC<SignAssistantViewProps> = ({ onNavigateToCamera }) => {
   const [inputText, setInputText] = useState<string>('Assalomu alaykum, rahmat');
   const [gender, setGender] = useState<AvatarGender>('female');
   const [viewMode, setViewMode] = useState<AvatarViewMode>('2d');
   const [tokens, setTokens] = useState<SignSequenceToken[]>([]);
   const [verifiedCount, setVerifiedCount] = useState<number>(0);
   const [totalTokens, setTotalTokens] = useState<number>(0);
-  const [hasUnmatched, setHasUnmatched] = useState<boolean>(false);
+
+  // Animation controller state
+  const [animState, setAnimState] = useState<AnimationState>('idle');
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [speed, setSpeed] = useState<number>(1);
+  const [isLooping, setIsLooping] = useState<boolean>(false);
+  const playTimerRef = useRef<any>(null);
 
   // Speech Recognition state
   const [isListening, setIsListening] = useState<boolean>(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
-  const recognizerRef = React.useRef<any>(null);
+  const recognizerRef = useRef<any>(null);
 
   useEffect(() => {
-    setSpeechSupported(isSpeechRecognitionSupported());
-    // Initial analysis for default text
     handleAnalyze('Assalomu alaykum, rahmat');
   }, []);
+
+  // Autoplay loop through tokens based on speed
+  useEffect(() => {
+    if (animState === 'signing' && tokens.length > 0) {
+      const stepDuration = Math.round(3200 / speed);
+      playTimerRef.current = setTimeout(() => {
+        if (currentIndex < tokens.length - 1) {
+          setCurrentIndex((prev) => prev + 1);
+        } else {
+          if (isLooping) {
+            setCurrentIndex(0);
+          } else {
+            setAnimState('completed');
+          }
+        }
+      }, stepDuration);
+    }
+    return () => {
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    };
+  }, [animState, currentIndex, tokens.length, speed, isLooping]);
 
   const handleAnalyze = (textToAnalyze: string) => {
     const result = analyzeTextForSigns(textToAnalyze);
     setTokens(result.tokens);
     setVerifiedCount(result.verifiedCount);
     setTotalTokens(result.totalTokens);
-    setHasUnmatched(result.hasUnmatched);
+    setCurrentIndex(0);
+    if (result.tokens.length > 0) {
+      setAnimState('idle');
+    }
   };
 
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleAnalyze(inputText);
+    setAnimState('signing');
   };
 
   const handleToggleSpeech = () => {
@@ -47,10 +80,13 @@ export const SignAssistantView: React.FC = () => {
         recognizerRef.current.stop();
       }
       setIsListening(false);
+      setAnimState('idle');
       return;
     }
 
     setSpeechError(null);
+    setAnimState('listening');
+
     const recognizer = createSpeechRecognizer(
       (transcript) => {
         setInputText(transcript);
@@ -59,9 +95,11 @@ export const SignAssistantView: React.FC = () => {
       (err) => {
         setSpeechError(err);
         setIsListening(false);
+        setAnimState('idle');
       },
       () => {
         setIsListening(false);
+        setAnimState('idle');
       }
     );
 
@@ -73,6 +111,7 @@ export const SignAssistantView: React.FC = () => {
       } catch (e) {
         setSpeechError("Mikrofonni ishga tushirishda xatolik yuz berdi.");
         setIsListening(false);
+        setAnimState('idle');
       }
     }
   };
@@ -80,21 +119,49 @@ export const SignAssistantView: React.FC = () => {
   const handleSelectPreset = (phrase: string) => {
     setInputText(phrase);
     handleAnalyze(phrase);
+    setAnimState('signing');
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Two-Way Communication Banner */}
+      {onNavigateToCamera && (
+        <div className="bg-gradient-to-r from-surdo-forest to-surdo-green text-surdo-cream p-5 rounded-3xl shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+              <Camera className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <span className="text-xs uppercase font-bold text-surdo-sage tracking-wider">
+                Ikki tomonlama inklyuziv muloqot
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-white font-display">
+                Kamera orqali imo-ishorani matn va ovozga aylantirish
+              </h3>
+            </div>
+          </div>
+
+          <button
+            onClick={onNavigateToCamera}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-surdo-forest hover:bg-surdo-cream font-bold text-xs sm:text-sm shadow-sm transition-all self-start sm:self-auto shrink-0"
+          >
+            <span>Kamera orqali aniqlashga o‘tish</span>
+            <ArrowRight className="w-4 h-4 text-surdo-green" />
+          </button>
+        </div>
+      )}
+
       {/* Module Header */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surdo-beige shadow-soft">
         <div className="max-w-3xl">
           <Badge variant="sage" size="md" className="mb-3">
-            Sun’iy intellekt va Imo-ishora
+            Yo‘nalish A: Nutq/Matn → Imo-ishora
           </Badge>
           <h1 className="text-2xl sm:text-4xl font-bold text-surdo-forest font-display tracking-tight">
-            AI Sign Assistant — Nutq va Matnni Imo-ishoraga Aylantirish
+            AI Sign Assistant — O‘zbekcha Nutq va Matnni Imo-ishoraga Aylantirish
           </h1>
           <p className="mt-3 text-sm sm:text-base text-surdo-brown leading-relaxed">
-            Istalgan o‘zbekcha matnni kiriting yoki mikrofon orqali ovoz bilan ayting. Bizning milliy avatarimiz (Malika yoki Jasur) tasdiqlangan o‘zbek imo-ishora lug‘ati asosida harakatlar ketma-ketligini namoyish etadi.
+            Istalgan o‘zbekcha matnni yozing yoki mikrofon orqali ayting. Bizning milliy avatarimiz (Malika yoki Jasur) tasdiqlangan o‘zbek imo-ishora lug‘ati asosida harakatlar ketma-ketligini namoyish etadi.
           </p>
         </div>
 
@@ -186,7 +253,7 @@ export const SignAssistantView: React.FC = () => {
                     rows={3}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Masalan: Assalomu alaykum, maktabga boramiz..."
+                    placeholder="Masalan: Assalomu alaykum, rahmat..."
                     className="w-full p-4 pr-12 text-sm sm:text-base rounded-2xl border border-surdo-beige bg-surdo-sand/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-surdo-forest/30 focus:border-surdo-forest transition-all resize-none text-surdo-darkest placeholder:text-stone-400"
                   />
                   {/* Microphone Button */}
@@ -229,13 +296,14 @@ export const SignAssistantView: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-surdo-forest hover:bg-surdo-green text-surdo-cream font-bold text-sm shadow-sm transition-all"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Imo-ishorada ko‘rish</span>
+                  <span>Imo-ishorada ijro etish</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setInputText('');
                     setTokens([]);
+                    setAnimState('idle');
                   }}
                   className="p-3 text-surdo-forest/60 hover:text-surdo-forest hover:bg-surdo-sand rounded-2xl border border-surdo-beige transition-colors"
                   title="Tozalash"
@@ -289,8 +357,14 @@ export const SignAssistantView: React.FC = () => {
                 {tokens.map((token, index) => (
                   <div
                     key={index}
-                    className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 transition-colors ${
-                      token.isVerified
+                    onClick={() => {
+                      setCurrentIndex(index);
+                      setAnimState('signing');
+                    }}
+                    className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 transition-colors cursor-pointer ${
+                      currentIndex === index
+                        ? 'ring-2 ring-surdo-forest/40 bg-white shadow-xs'
+                        : token.isVerified
                         ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                         : 'bg-amber-50/70 border-amber-200 text-amber-950'
                     }`}
@@ -314,31 +388,63 @@ export const SignAssistantView: React.FC = () => {
                 ))}
               </div>
             )}
-
-            {/* Verification Disclaimer */}
-            <div className="p-3 bg-surdo-sand/40 rounded-xl border border-surdo-beige text-[11px] text-surdo-brown leading-relaxed flex items-start gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-surdo-green shrink-0 mt-0.5" />
-              <span>
-                <strong>Texnik shaffoflik:</strong> SURDO AI matndan nutqqa (TTS) oddiy ovozni imo-ishora deb da’vo qilmaydi. Har bir ibora o‘zbek imo-ishora tilining tasdiqlangan qoidalariga muvofiq ko‘rsatiladi.
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* Right Column: Avatar Presentation Viewport (7 cols) */}
-        <div className="lg:col-span-7">
+        {/* Right Column: Avatar Presentation Viewport & Animation Controller (7 cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* Animation Viewport */}
           {viewMode === '2d' ? (
             <SignSequencePlayer
               tokens={tokens}
               gender={gender}
+              animationState={animState}
+              currentIndex={currentIndex}
               onSelectSuggestion={(word) => {
                 setInputText(word);
                 handleAnalyze(word);
               }}
             />
           ) : (
-            <AvatarViewer3D gender={gender} />
+            <AvatarViewer3D
+              gender={gender}
+              animationState={animState}
+              activeSignName={tokens[currentIndex]?.matchedSign?.word || tokens[currentIndex]?.originalWord}
+              speed={speed}
+            />
           )}
+
+          {/* Reusable Animation Controller */}
+          <AvatarAnimationController
+            state={animState}
+            currentIndex={currentIndex}
+            totalSteps={tokens.length}
+            speed={speed}
+            isLooping={isLooping}
+            onPlay={() => setAnimState('signing')}
+            onPause={() => setAnimState('paused')}
+            onReplay={() => {
+              setCurrentIndex(0);
+              setAnimState('signing');
+            }}
+            onNextStep={() => {
+              if (currentIndex < tokens.length - 1) {
+                setCurrentIndex(currentIndex + 1);
+              }
+            }}
+            onPrevStep={() => {
+              if (currentIndex > 0) {
+                setCurrentIndex(currentIndex - 1);
+              }
+            }}
+            onSelectStep={(idx) => {
+              setCurrentIndex(idx);
+              setAnimState('signing');
+            }}
+            onSpeedChange={(s) => setSpeed(s)}
+            onToggleLoop={() => setIsLooping(!isLooping)}
+            stepLabels={tokens.map((t) => t.originalWord)}
+          />
         </div>
       </div>
     </div>

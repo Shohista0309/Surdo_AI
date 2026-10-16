@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ArrowRight, Eye, Sparkles, BookOpen, Search, Heart, GraduationCap, Home } from 'lucide-react';
+import { Menu, X, ArrowRight, Eye, Sparkles, BookOpen, Search, Heart, GraduationCap, Home, Camera } from 'lucide-react';
 import { NavPage, AppModule } from '../../types';
 
 interface NavbarProps {
@@ -31,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'imolab', label: 'ImoLab', icon: <Search className="w-4 h-4" /> },
     { id: 'oilasign', label: 'OilaSign', icon: <Heart className="w-4 h-4" /> },
     { id: 'signassistant', label: 'AI Yordamchi', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'camera', label: 'Imo-Kamera', icon: <Camera className="w-4 h-4" /> },
     { id: 'teacher', label: 'O‘qituvchi', icon: <GraduationCap className="w-4 h-4" /> },
   ];
 
@@ -70,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Desktop Navigation */}
           {currentPage === 'landing' ? (
-            <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-surdo-darkest">
+            <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-surdo-darkest">
               <button
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -93,6 +94,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="hover:text-surdo-forest transition-colors"
               >
                 AI Avatarlar
+              </button>
+              <button
+                onClick={() => {
+                  onNavigatePage('app');
+                  onSelectModule('camera');
+                }}
+                className="hover:text-surdo-forest transition-colors flex items-center gap-1 text-emerald-800"
+              >
+                <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Kamera Tahlili</span>
               </button>
               <button
                 onClick={() => {
@@ -122,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={m.id}
                     onClick={() => onSelectModule(m.id)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-surdo-forest text-surdo-cream shadow-sm'
                         : 'text-surdo-darkest hover:text-surdo-forest hover:bg-white/60'
@@ -222,6 +233,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   Imkoniyatlar
                 </a>
+                <button
+                  onClick={() => {
+                    onNavigatePage('app');
+                    onSelectModule('camera');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-xl hover:bg-surdo-sand text-sm font-semibold text-emerald-800 text-left flex items-center gap-2"
+                >
+                  <Camera className="w-4 h-4 text-emerald-600" />
+                  <span>Kamera orqali aniqlash</span>
+                </button>
                 <button
                   onClick={() => {
                     onNavigatePage('app');

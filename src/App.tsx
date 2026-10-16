@@ -8,6 +8,7 @@ import { DarsKoprikView } from './components/modules/DarsKoprik/DarsKoprikView';
 import { ImoLabView } from './components/modules/ImoLab/ImoLabView';
 import { OilaSignView } from './components/modules/OilaSign/OilaSignView';
 import { SignAssistantView } from './components/modules/SignAssistant/SignAssistantView';
+import { CameraSignRecognitionView } from './components/modules/CameraRecognition/CameraSignRecognitionView';
 import { TeacherDashboardView } from './components/modules/TeacherDashboard/TeacherDashboardView';
 
 export const App: React.FC = () => {
@@ -76,7 +77,10 @@ export const App: React.FC = () => {
               <ImoLabView onNavigateToAssistant={handleNavigateToAssistantWithWord} />
             )}
             {currentModule === 'oilasign' && <OilaSignView />}
-            {currentModule === 'signassistant' && <SignAssistantView />}
+            {currentModule === 'signassistant' && (
+              <SignAssistantView onNavigateToCamera={() => handleSelectModule('camera')} />
+            )}
+            {currentModule === 'camera' && <CameraSignRecognitionView />}
             {currentModule === 'teacher' && <TeacherDashboardView />}
           </div>
         )}
