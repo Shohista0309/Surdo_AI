@@ -1,35 +1,34 @@
 <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="favBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1E4D41" />
-      <stop offset="100%" stop-color="#13362E" />
+    <linearGradient id="electroBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070D19" />
+      <stop offset="100%" stop-color="#0E1E3A" />
     </linearGradient>
-    <linearGradient id="favLeftHand" x1="15%" y1="15%" x2="85%" y2="85%">
-      <stop offset="0%" stop-color="#F7F3E9" />
-      <stop offset="60%" stop-color="#E9DDC9" />
-      <stop offset="100%" stop-color="#A9BDA6" />
+    <linearGradient id="electroCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#0EA5E9" />
     </linearGradient>
-    <linearGradient id="favRightHand" x1="85%" y1="15%" x2="15%" y2="85%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="50%" stop-color="#E9DDC9" />
-      <stop offset="100%" stop-color="#A9BDA6" />
-    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
 
-  <!-- Squircle Base -->
-  <rect x="2" y="2" width="96" height="96" rx="24" fill="url(#favBgGrad)" stroke="#2F6B4F" stroke-width="2"/>
+  <rect x="2" y="2" width="96" height="96" rx="24" fill="url(#electroBg)" stroke="#00F0FF" stroke-width="2.5"/>
 
-  <!-- Left Hand forming heart -->
-  <path d="M 50 31 C 42 20, 27 15, 18 26 C 9 37, 8 51, 17 64 C 24 74, 36 82, 50 90 C 45 82, 39 74, 34 65 C 28 55, 29 44, 37 36 C 42 31, 47 31, 50 31 Z" fill="url(#favLeftHand)"/>
-  <path d="M 23 24 C 27 28, 33 34, 36 40" stroke="#173F35" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
-  <path d="M 33 18 C 38 23, 43 30, 45 36" stroke="#173F35" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+  <!-- Circuit nodes -->
+  <circle cx="20" cy="25" r="4" fill="#00F0FF" filter="url(#glow)"/>
+  <circle cx="80" cy="25" r="4" fill="#0EA5E9"/>
+  <circle cx="25" cy="78" r="4" fill="#10B981"/>
+  <circle cx="75" cy="78" r="4" fill="#00F0FF"/>
 
-  <!-- Right Hand forming heart -->
-  <path d="M 50 31 C 58 20, 73 15, 82 26 C 91 37, 92 51, 83 64 C 76 74, 64 82, 50 90 C 55 82, 61 74, 66 65 C 72 55, 71 44, 63 36 C 58 31, 53 31, 50 31 Z" fill="url(#favRightHand)"/>
-  <path d="M 77 24 C 73 28, 67 34, 64 40" stroke="#173F35" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
-  <path d="M 67 18 C 62 23, 57 30, 55 36" stroke="#173F35" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+  <path d="M 20 25 L 35 25 L 45 35" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3"/>
+  <path d="M 80 25 L 65 25 L 55 35" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 25 78 L 40 78 L 48 68" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Center Heart Point -->
-  <circle cx="50" cy="52" r="3.5" fill="#F7F3E9"/>
-  <circle cx="50" cy="52" r="1.5" fill="#8A6346"/>
+  <!-- Stylized Hand Pinching Lightning / Cable -->
+  <path d="M 38 65 C 38 65, 34 52, 40 45 C 43 41, 48 40, 50 45 L 52 35 C 53 31, 58 31, 59 35 L 60 45 C 62 43, 67 43, 68 47 L 69 55 C 69 66, 60 72, 50 72 C 43 72, 38 68, 38 65 Z" fill="#1E293B" stroke="#00F0FF" stroke-width="2.5" filter="url(#glow)"/>
+
+  <!-- Lightning Bolt between pinch -->
+  <path d="M 47 22 L 44 32 L 53 32 L 49 44" stroke="#00F0FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
 </svg>

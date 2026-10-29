@@ -1,5 +1,6 @@
 {
-  "name": "surdo-ai",
+  "name": "electrohand",
+  "description": "ElectroHand — Veb-kamera orqali qo'l harakatlari yordamida boshqariluvchi 3D elektr zanjirlari simulyatori",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -11,6 +12,7 @@
   "dependencies": {
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/hands": "^0.4.1675469240",
+    "@mediapipe/tasks-vision": "^1.1.1",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.16.0",
     "react": "^18.3.1",
